@@ -1,0 +1,13 @@
+[project]
+name = "bob-the-builder"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    'requests',
+    'bs4',
+    "pygame>=2.6.1",
+    "pyserial>=3.5",
+    "mpremote>=1.29.0",
+]
