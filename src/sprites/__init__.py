@@ -25,6 +25,8 @@ MENU_BACKGROUND = {"path": str(BACKGROUND_DIR / "marker_overlay_check.png")}
 PATRICK_HOUSE_BACKGROUND = {"path": str(BACKGROUND_DIR / "patrick_house_480x270_crisp.png")}
 SPONGEBOB_HOUSE_BACKGROUND = {"path": str(BACKGROUND_DIR / "spongebob_house.png")}
 SANDY_TREEDOME_BACKGROUND = {"path": str(BACKGROUND_DIR / "underwater_grass_field_480x270.png")}
+SQUIDWARD_HOUSE_BACKGROUND = {"path": str(BACKGROUND_DIR / "squidward_house_480x270_crisp.png")}
+OCTOPUS_REEF_BACKGROUND = {"path": str(BACKGROUND_DIR / "octopus_reef_scene_480x270.png")}
 
 PATRICK_MENU_BUTTON = {"path": str(MENU_BUTTON_DIR / "patrick_landmark_56h.png")}
 SANDY_MENU_BUTTON = {"path": str(MENU_BUTTON_DIR / "sandy_landmark_56h.png")}
@@ -32,3 +34,5 @@ SPONGEBOB_MENU_BUTTON = {"path": str(MENU_BUTTON_DIR / "spongebob_house_cutout_2
 
 PATRICK_FRAME_1 = {"path": str(CHARACTER_DIR / "pattrick" / "patrick1_character_96h.png")}
 PATRICK_FRAME_2 = {"path": str(CHARACTER_DIR / "pattrick" / "patrick2_character_96h.png")}
+SPONGEBOB_FRAME_1 = {"path": str(CHARACTER_DIR / "spongebob" / "spongebob_character_96h.png")}
+SPONGEBOB_FRAME_2 = {"path": str(CHARACTER_DIR / "spongebob" / "spongebob2_character_96h.png")}
