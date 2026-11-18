@@ -73,9 +73,29 @@ def test_score_is_pushed_again_only_when_it_changes():
     assert reader.scores_sent[-1] > 0
 
 
+def test_scan_that_fits_spawns_flying_patties():
+    reader = StubReader()
+    scene = _make_scene(reader)
+    scene.handle_event(pygame.event.Event(BUTTON_ENTER_EVENT))  # start phase 1
+    reader.queue_scan("SEA_URCHIN")  # fits Patrick
+    scene.update(0.0)
+    assert len(scene._flying_patties._patties) > 0
+
+
+def test_scan_that_does_not_fit_spawns_no_flying_patties():
+    reader = StubReader()
+    scene = _make_scene(reader)
+    scene.handle_event(pygame.event.Event(BUTTON_ENTER_EVENT))
+    reader.queue_scan("SUN")  # Patrick has no use for Sandy's sun (fit == 0)
+    scene.update(0.0)
+    assert scene._flying_patties._patties == []
+
+
 if __name__ == "__main__":
     test_scene_pushes_zero_on_entry()
     test_prev_and_next_events_do_not_advance_the_round()
     test_enter_event_advances_the_round()
     test_score_is_pushed_again_only_when_it_changes()
+    test_scan_that_fits_spawns_flying_patties()
+    test_scan_that_does_not_fit_spawns_no_flying_patties()
     print("OK")

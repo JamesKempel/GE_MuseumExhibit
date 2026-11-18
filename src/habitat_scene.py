@@ -3,6 +3,7 @@ from typing import Callable
 import pygame
 
 from constants import BUTTON_ENTER_EVENT, WINDOW_SIZE
+from flying_patties import FlyingPatties
 from habitat_overlays import (
     Fonts,
     draw_highlight,
@@ -11,7 +12,7 @@ from habitat_overlays import (
     draw_intro,
     draw_results,
 )
-from habitat_round import HabitatRound, Piece, ScanOutcome, Stage
+from habitat_round import HabitatRound, Piece, ScanOutcome, Stage, statue_patties
 from habitats import Habitat
 from images import load_fitted_image, load_scaled_image
 from krabby_patty import make_patty_surface
@@ -21,6 +22,9 @@ from statues import STATUES
 
 # Intro and results cards wait for one of these (or the wired habitat button).
 START_KEYS = (pygame.K_RETURN, pygame.K_KP_ENTER)
+
+# Where the physical LCD sits in the exhibit layout - flying patties animate here.
+LCD_TARGET_POSITION = (WINDOW_SIZE[0] // 2, 40)
 
 
 class HabitatScene:
@@ -60,6 +64,7 @@ class HabitatScene:
         self._reset_button = ResetButton(go_to_menu)
         self._last_sent_score = 0
         self._rfid_reader.send_score(self._last_sent_score)
+        self._flying_patties = FlyingPatties()
 
     # ---------- Input ----------
 
@@ -84,6 +89,7 @@ class HabitatScene:
         for statue in self._rfid_reader.poll_events():
             self._handle_scan(statue)
         self._round.tick(dt)
+        self._flying_patties.update(self._elapsed)
         self._push_score_if_changed()
 
     def _push_score_if_changed(self) -> None:
@@ -97,8 +103,21 @@ class HabitatScene:
         result = self._round.scan(statue)
         if result.outcome == ScanOutcome.REPLACED:
             print(f"Round: swapped {result.replaced.statue} for {statue}")
+            self._spawn_flying_patties(result.piece)
         elif result.outcome == ScanOutcome.PLACED:
             print(f"Round: placed {statue}, fit {result.piece.fit:.0%}")
+            self._spawn_flying_patties(result.piece)
+
+    def _spawn_flying_patties(self, piece: Piece) -> None:
+        if piece.fit <= 0:
+            return
+        placement = self._habitat.placement_for(piece.statue)
+        if placement is None:
+            return
+        count = statue_patties(piece)
+        if count <= 0:
+            return
+        self._flying_patties.spawn(placement.slots[0], LCD_TARGET_POSITION, count, self._elapsed)
 
     # ---------- Draw ----------
 
@@ -121,6 +140,7 @@ class HabitatScene:
             draw_results(surface, self._fonts, self._round)
 
         self._reset_button.draw(surface)
+        self._flying_patties.draw(surface, self._patty, self._elapsed)
 
     def _draw_pieces(self, surface: pygame.Surface) -> dict[int, pygame.Rect]:
         """Draw every placed statue back-to-front; returns the on-screen
