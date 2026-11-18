@@ -1,30 +1,30 @@
-# RC522 RFID reader for Raspberry Pi Pico (MicroPython)
-# Prints the 4-byte UID of any card/tag held near the reader.
+# RC522 RFID reader + 3 menu buttons + 16x2 LCD, for Raspberry Pi Pico (MicroPython)
+# Wiring (see electronics.md):
+#   RC522 (SPI0): SCK=GP2 MOSI=GP3 MISO=GP4 CS(SDA)=GP5 RST=GP6, 3V3 + GND, IRQ unconnected
+#   Buttons (pull-up, other leg to GND): prev=GP16 next=GP17 enter=GP18
+#   LCD (PCF8574 I2C backpack, I2C1): SDA=GP14 SCL=GP15, VCC from VBUS 5V, GND to GND
 #
-# Wiring (SPI0):
-#   RC522 SDA/SS -> GP17  (physical pin 22)
-#   RC522 SCK    -> GP18  (physical pin 24)
-#   RC522 MOSI   -> GP19  (physical pin 25)
-#   RC522 MISO   -> GP16  (physical pin 21)
-#   RC522 RST    -> GP22  (physical pin 29)
-#   RC522 IRQ    -> not connected
-#   RC522 GND    -> GND   (physical pin 23)
-#   RC522 3.3V   -> 3V3(OUT) (physical pin 36)   NOT VBUS/VSYS (5V)
-#
-# Habitat button (normally-closed, internal pull-up):
-#   Button       -> GP15  (physical pin 20) and GND
-#   Prints "Button: pressed" once per press; the game rotates to the next habitat.
-
+# Serial protocol with the laptop game:
+#   -> "Card UID: XX XX XX XX"      once per newly-seen tag
+#   -> "Button: prev pressed"       \
+#   -> "Button: next pressed"        > once per debounced press
+#   -> "Button: enter pressed"      /
+#   <- "SCORE <n>"                  laptop -> Pico, shown on the LCD's 2nd line
 
 # prototype figure rfid tag: Card UID: AA E1 16 DC
-from machine import Pin, SPI, Timer
+from machine import Pin, SPI, I2C, Timer
+import select
+import sys
 import time
 
-PIN_SCK = 18
-PIN_MOSI = 19
-PIN_MISO = 16
-PIN_CS = 17
-PIN_RST = 22
+PIN_SCK = 2
+PIN_MOSI = 3
+PIN_MISO = 4
+PIN_CS = 5
+PIN_RST = 6
+
+LCD_SDA = 14
+LCD_SCL = 15
 
 # RC522 registers
 CommandReg = 0x01
@@ -88,13 +88,11 @@ def clear_bits(reg, mask):
 # ---------- Setup ----------
 
 def rc522_init():
-    # Hardware reset
     rst.value(0)
     time.sleep_ms(10)
     rst.value(1)
     time.sleep_ms(50)
 
-    # Soft reset, then configure
     write_reg(CommandReg, PCD_SOFTRESET)
     time.sleep_ms(50)
 
@@ -102,39 +100,37 @@ def rc522_init():
     write_reg(RxModeReg, 0x00)
     write_reg(ModWidthReg, 0x26)
 
-    # Timer: ~25 ms timeout so a missing card doesn't hang the loop
     write_reg(TModeReg, 0x80)
     write_reg(TPrescalerReg, 0xA9)
     write_reg(TReloadRegH, 0x03)
     write_reg(TReloadRegL, 0xE8)
 
-    write_reg(TxASKReg, 0x40)  # 100% ASK modulation
-    write_reg(ModeReg, 0x3D)   # CRC preset 0x6363
+    write_reg(TxASKReg, 0x40)
+    write_reg(ModeReg, 0x3D)
 
-    set_bits(TxControlReg, 0x03)  # Antenna on
+    set_bits(TxControlReg, 0x03)
 
 
 # ---------- Talking to a card ----------
 
 def transceive(data, tx_last_bits=0):
-    """Send bytes to the card and return its reply as bytes, or None."""
     write_reg(CommandReg, PCD_IDLE)
-    write_reg(ComIrqReg, 0x7F)     # Clear interrupt flags
-    write_reg(FIFOLevelReg, 0x80)  # Flush FIFO
+    write_reg(ComIrqReg, 0x7F)
+    write_reg(FIFOLevelReg, 0x80)
 
     for b in data:
         write_reg(FIFODataReg, b)
 
     write_reg(BitFramingReg, tx_last_bits)
     write_reg(CommandReg, PCD_TRANSCEIVE)
-    set_bits(BitFramingReg, 0x80)  # StartSend
+    set_bits(BitFramingReg, 0x80)
 
     start = time.ticks_ms()
     while True:
         irq = read_reg(ComIrqReg)
-        if irq & 0x30:   # RxIRq or IdleIRq: done
+        if irq & 0x30:
             break
-        if irq & 0x01:   # Timer ran out: no card
+        if irq & 0x01:
             clear_bits(BitFramingReg, 0x80)
             return None
         if time.ticks_diff(time.ticks_ms(), start) > 50:
@@ -143,7 +139,7 @@ def transceive(data, tx_last_bits=0):
 
     clear_bits(BitFramingReg, 0x80)
 
-    if read_reg(ErrorReg) & 0x13:  # Buffer overflow, parity, protocol error
+    if read_reg(ErrorReg) & 0x13:
         return None
 
     n = read_reg(FIFOLevelReg)
@@ -151,63 +147,148 @@ def transceive(data, tx_last_bits=0):
 
 
 def read_uid():
-    """Return the card's 4-byte UID as bytes, or None if no card."""
     clear_bits(CollReg, 0x80)
 
-    # Wake up any card in the field (REQA is a 7-bit frame)
     atqa = transceive([PICC_REQA], tx_last_bits=0x07)
     if atqa is None or len(atqa) != 2:
         return None
 
-    # Anticollision: card replies with 4 UID bytes + 1 check byte
     resp = transceive([PICC_ANTICOLL1, 0x20])
     if resp is None or len(resp) != 5:
         return None
 
-    if resp[0] ^ resp[1] ^ resp[2] ^ resp[3] != resp[4]:  # Bad checksum
+    if resp[0] ^ resp[1] ^ resp[2] ^ resp[3] != resp[4]:
         return None
 
     return resp[:4]
 
 
-# ---------- Habitat button ----------
+# ---------- Buttons ----------
 
-PIN_BUTTON = 15
+BUTTON_PINS = {"prev": 16, "next": 17, "enter": 18}
 BUTTON_SAMPLE_MS = 5
 BUTTON_DEBOUNCE_MS = 30
 BUTTON_STABLE_SAMPLES = BUTTON_DEBOUNCE_MS // BUTTON_SAMPLE_MS
 
-button = Pin(PIN_BUTTON, Pin.IN, Pin.PULL_UP)  # NC wiring: 0 when released, 1 when pressed
 led = Pin("LED", Pin.OUT)
-button_state = button.value()
-button_last_reading = button_state
-button_stable_count = 0
 
 
-def poll_button(_timer):
-    """Runs every BUTTON_SAMPLE_MS on a timer, so presses are caught even
-    while the main loop is blocked talking to the RFID reader. A reading has
-    to hold steady for BUTTON_DEBOUNCE_MS before it counts as a change."""
-    global button_state, button_last_reading, button_stable_count
-    reading = button.value()
-    if reading != button_last_reading:
-        button_last_reading = reading
-        button_stable_count = 0
-        return
-    if reading == button_state:
-        return
-    button_stable_count += 1
-    if button_stable_count < BUTTON_STABLE_SAMPLES:
-        return
-    button_state = reading
-    if button_state == 1:  # 1 = pressed (NC wiring)
-        print("Button: pressed")
-        led.on()
-    else:
-        led.off()
+class DebouncedButton:
+    def __init__(self, name, gpio):
+        self.name = name
+        self.pin = Pin(gpio, Pin.IN, Pin.PULL_UP)
+        self.state = self.pin.value()
+        self.last_reading = self.state
+        self.stable_count = 0
+
+    def poll(self):
+        """Call every BUTTON_SAMPLE_MS. Returns True exactly once per
+        confirmed press (NC wiring: 1 = pressed)."""
+        reading = self.pin.value()
+        if reading != self.last_reading:
+            self.last_reading = reading
+            self.stable_count = 0
+            return False
+        if reading == self.state:
+            return False
+        self.stable_count += 1
+        if self.stable_count < BUTTON_STABLE_SAMPLES:
+            return False
+        self.state = reading
+        return self.state == 1
 
 
-button_timer = Timer(period=BUTTON_SAMPLE_MS, mode=Timer.PERIODIC, callback=poll_button)
+buttons = [DebouncedButton(name, gpio) for name, gpio in BUTTON_PINS.items()]
+
+
+def poll_buttons(_timer):
+    for button in buttons:
+        if button.poll():
+            print("Button: {} pressed".format(button.name))
+            led.on()
+            led.off()
+
+
+button_timer = Timer(period=BUTTON_SAMPLE_MS, mode=Timer.PERIODIC, callback=poll_buttons)
+
+
+# ---------- LCD (PCF8574 backpack, 4-bit mode) ----------
+# backpack bits: P0=RS  P1=RW  P2=EN  P3=backlight  P4..P7=D4..D7
+
+class LCD:
+    def __init__(self, i2c, addr):
+        self.i2c, self.addr = i2c, addr
+        time.sleep_ms(50)
+        for _ in range(3):
+            self._write4(0x03, 0); time.sleep_ms(5)
+        self._write4(0x02, 0)
+        for c in (0x28, 0x0C, 0x06, 0x01):
+            self.cmd(c)
+        time.sleep_ms(2)
+
+    def _out(self, b):
+        self.i2c.writeto(self.addr, bytes([b | 0x08]))
+
+    def _write4(self, nib, rs):
+        b = (nib << 4) | rs
+        self._out(b | 0x04); self._out(b)
+
+    def cmd(self, c):
+        self._write4(c >> 4, 0); self._write4(c & 0x0F, 0)
+        if c in (0x01, 0x02):
+            time.sleep_ms(2)
+
+    def write(self, text):
+        for ch in text:
+            v = ord(ch)
+            self._write4(v >> 4, 1); self._write4(v & 0x0F, 1)
+
+    def show(self, line1, line2=""):
+        self.cmd(0x80); self.write("{:<16}".format(line1[:16]))
+        self.cmd(0xC0); self.write("{:<16}".format(line2[:16]))
+
+
+lcd = None
+try:
+    i2c = I2C(1, sda=Pin(LCD_SDA), scl=Pin(LCD_SCL), freq=100000)
+    found = i2c.scan()
+    addr = 0x27 if 0x27 in found else (0x3F if 0x3F in found else (found[0] if found else None))
+    if addr is not None:
+        lcd = LCD(i2c, addr)
+except Exception as e:
+    print("LCD init failed:", e)
+
+IDLE_L1 = "Bikini Bottom"
+IDLE_L2 = "Scan or press"
+
+
+def show(line1, line2=""):
+    if lcd:
+        try:
+            lcd.show(line1, line2)
+        except Exception as e:
+            print("LCD write failed:", e)
+
+
+show(IDLE_L1, IDLE_L2)
+
+
+# ---------- Incoming score updates from the laptop ----------
+
+incoming = ""
+
+
+def check_for_score():
+    """Non-blocking: read whatever's waiting on stdin, and show the LCD's
+    2nd line as soon as a full "SCORE <n>" line has arrived."""
+    global incoming
+    while select.select([sys.stdin], [], [], 0)[0]:
+        incoming += sys.stdin.read(1)
+        if incoming.endswith("\n"):
+            line = incoming.strip()
+            incoming = ""
+            if line.startswith("SCORE "):
+                show(IDLE_L1, "Score: " + line[6:])
 
 
 # ---------- Main ----------
@@ -225,6 +306,8 @@ last_uid = None
 misses = 0
 
 while True:
+    check_for_score()
+
     uid = read_uid()
     if uid is not None:
         misses = 0
