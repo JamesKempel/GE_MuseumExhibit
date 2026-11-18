@@ -4,10 +4,8 @@ import pygame
 
 import sprites
 from button import Button
-from constants import HABITAT_BUTTON_EVENT, WINDOW_SIZE
+from constants import BUTTON_ENTER_EVENT, BUTTON_NEXT_EVENT, BUTTON_PREV_EVENT, WINDOW_SIZE
 from images import load_fitted_image, load_scaled_image
-from reset_button import ResetButton
-from rfid import EnvironmentGate, RFIDReader
 
 TITLE_COLOR = (255, 255, 255)
 
@@ -64,10 +62,12 @@ class MainMenuScene:
         self._focused_index = 0
 
     def handle_event(self, event: pygame.event.Event) -> None:
-        if event.type == HABITAT_BUTTON_EVENT:
-            # Physical button: same as the Right arrow - highlight the next
-            # habitat to the right, wrapping from SpongeBob back to Patrick.
+        if event.type == BUTTON_PREV_EVENT:
+            self._move_focus(-1)
+        elif event.type == BUTTON_NEXT_EVENT:
             self._move_focus(1)
+        elif event.type == BUTTON_ENTER_EVENT:
+            self._activate(self._focused_index)
         elif event.type == pygame.KEYDOWN:
             if event.key in (pygame.K_LEFT, pygame.K_UP):
                 self._move_focus(-1)
@@ -111,102 +111,3 @@ class MainMenuScene:
         index = self._button_index_at(pos)
         if index is not None:
             self._focused_index = index
-
-
-class HouseScene:
-    def __init__(
-        self,
-        go_to_menu: Callable[[], None],
-        background_path: str,
-        character_path: str | None = None,
-    ) -> None:
-        self._background = load_fitted_image(background_path, WINDOW_SIZE)
-        self._character = load_scaled_image(character_path) if character_path else None
-        self._reset_button = ResetButton(go_to_menu)
-
-    def handle_event(self, event: pygame.event.Event) -> None:
-        self._reset_button.handle_event(event)
-
-    def update(self, dt: float) -> None:
-        pass
-
-    def draw(self, surface: pygame.Surface) -> None:
-        surface.blit(self._background, (0, 0))
-        if self._character is not None:
-            character_rect = self._character.get_rect(
-                midbottom=(surface.get_width() // 2, surface.get_height() - 20)
-            )
-            surface.blit(self._character, character_rect)
-        self._reset_button.draw(surface)
-
-
-# Open patches of sand in patrick_house_480x270_crisp.png, clear of the rock,
-# chair, lamp, and coral, so placed kelp is never hidden behind set dressing.
-# A single tap of the kelp tag fills in all of these at once.
-KELP_SLOTS = [
-    (90, 515),
-    (160, 520),
-    (250, 510),
-    (780, 500),
-    (850, 515),
-    (930, 505),
-]
-
-PATRICK_ENVIRONMENT = "patrick_house"
-
-
-class PatrickHouseScene:
-    """Like HouseScene, but listens for RFID scans: tapping the tag wired to
-    the kelp rewilding sprite fills the yard with kelp in one go and swaps
-    Patrick to his other character sprite. The tag only takes effect once per
-    visit to this environment - re-tapping it doesn't add more. Quitting the
-    level (Esc / the reset button) resets that progress, same as quitting a
-    level in a game, so the next visit starts clean."""
-
-    def __init__(
-        self,
-        go_to_menu: Callable[[], None],
-        rfid_reader: RFIDReader,
-        environment_gate: EnvironmentGate,
-    ) -> None:
-        self._rfid_reader = rfid_reader
-        self._rfid_reader.drain()  # ignore scans that happened before this scene was entered
-        self._environment_gate = environment_gate
-        self._background = load_fitted_image(sprites.PATRICK_HOUSE_BACKGROUND["path"], WINDOW_SIZE)
-        self._character_default = load_scaled_image(sprites.PATRICK_FRAME_1["path"])
-        self._character_kelp_placed = load_scaled_image(sprites.PATRICK_FRAME_2["path"])
-        self._kelp_image = load_scaled_image(sprites.KELP["path"])
-        self._kelp_positions = environment_gate.placed(PATRICK_ENVIRONMENT, "KELP")
-        self._reset_button = ResetButton(self._quit_level(go_to_menu))
-
-    def _quit_level(self, go_to_menu: Callable[[], None]) -> Callable[[], None]:
-        def quit_level() -> None:
-            self._environment_gate.reset(PATRICK_ENVIRONMENT)
-            go_to_menu()
-
-        return quit_level
-
-    def handle_event(self, event: pygame.event.Event) -> None:
-        self._reset_button.handle_event(event)
-
-    def update(self, dt: float) -> None:
-        for sprite_name in self._rfid_reader.poll_events():
-            if sprite_name == "KELP":
-                self._kelp_positions = self._environment_gate.try_consume(
-                    PATRICK_ENVIRONMENT, "KELP", KELP_SLOTS
-                )
-
-    def draw(self, surface: pygame.Surface) -> None:
-        surface.blit(self._background, (0, 0))
-
-        for position in self._kelp_positions:
-            kelp_rect = self._kelp_image.get_rect(midbottom=position)
-            surface.blit(self._kelp_image, kelp_rect)
-
-        character = self._character_kelp_placed if self._kelp_positions else self._character_default
-        center_x = surface.get_width() // 2
-        ground_y = surface.get_height() - 20
-        character_rect = character.get_rect(midbottom=(center_x, ground_y))
-        surface.blit(character, character_rect)
-
-        self._reset_button.draw(surface)
