@@ -28,8 +28,8 @@ class StubReader:
         self._queued_events.append(statue)
 
 
-def _make_scene(reader):
-    return HabitatScene(habitat=habitats.PATRICK, go_to_menu=lambda: None, rfid_reader=reader)
+def _make_scene(reader, habitat=habitats.PATRICK):
+    return HabitatScene(habitat=habitat, go_to_menu=lambda: None, rfid_reader=reader)
 
 
 def test_scene_pushes_zero_on_entry():
@@ -91,6 +91,18 @@ def test_scan_that_does_not_fit_spawns_no_flying_patties():
     assert scene._flying_patties._patties == []
 
 
+def test_partial_fit_scan_spawns_flying_patties():
+    # ROCKS_WITH_MUD isn't one of SpongeBob's placements, but it's a
+    # partial fit (0.5) for him, so it still earns patties and should
+    # still fly - not just statues that perfectly complete a placement.
+    reader = StubReader()
+    scene = _make_scene(reader, habitat=habitats.SPONGEBOB)
+    scene.handle_event(pygame.event.Event(BUTTON_ENTER_EVENT))  # start phase 1
+    reader.queue_scan("ROCKS_WITH_MUD")
+    scene.update(0.0)
+    assert len(scene._flying_patties._patties) > 0
+
+
 if __name__ == "__main__":
     test_scene_pushes_zero_on_entry()
     test_prev_and_next_events_do_not_advance_the_round()
@@ -98,4 +110,5 @@ if __name__ == "__main__":
     test_score_is_pushed_again_only_when_it_changes()
     test_scan_that_fits_spawns_flying_patties()
     test_scan_that_does_not_fit_spawns_no_flying_patties()
+    test_partial_fit_scan_spawns_flying_patties()
     print("OK")

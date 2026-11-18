@@ -111,13 +111,19 @@ class HabitatScene:
     def _spawn_flying_patties(self, piece: Piece) -> None:
         if piece.fit <= 0:
             return
-        placement = self._habitat.placement_for(piece.statue)
-        if placement is None:
-            return
         count = statue_patties(piece)
         if count <= 0:
             return
-        self._flying_patties.spawn(placement.slots[0], LCD_TARGET_POSITION, count, self._elapsed)
+        # A perfect statue fills its placement's own slots; a partial-fit
+        # statue (earns patties but isn't a placement) is drawn at its open
+        # slot instead - same rule _piece_sprites uses to draw it.
+        placement = self._habitat.placement_for(piece.statue)
+        if placement is not None:
+            start = placement.slots[0]
+        else:
+            slot = next(i for i, p in enumerate(self._round.pieces) if p.statue == piece.statue)
+            start = self._habitat.open_slots[slot]
+        self._flying_patties.spawn(start, LCD_TARGET_POSITION, count, self._elapsed)
 
     # ---------- Draw ----------
 

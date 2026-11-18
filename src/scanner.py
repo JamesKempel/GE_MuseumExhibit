@@ -183,7 +183,7 @@ class DebouncedButton:
 
     def poll(self):
         """Call every BUTTON_SAMPLE_MS. Returns True exactly once per
-        confirmed press (NC wiring: 1 = pressed)."""
+        confirmed press (pull-up wiring, pin to GND when pressed: 0 = pressed)."""
         reading = self.pin.value()
         if reading != self.last_reading:
             self.last_reading = reading
@@ -195,7 +195,7 @@ class DebouncedButton:
         if self.stable_count < BUTTON_STABLE_SAMPLES:
             return False
         self.state = reading
-        return self.state == 1
+        return self.state == 0
 
 
 buttons = [DebouncedButton(name, gpio) for name, gpio in BUTTON_PINS.items()]
