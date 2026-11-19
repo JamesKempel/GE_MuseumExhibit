@@ -5,7 +5,7 @@ pygame.display.set_mode((1, 1))
 
 import habitats
 from constants import BUTTON_ENTER_EVENT, BUTTON_NEXT_EVENT, BUTTON_PREV_EVENT
-from habitat_round import Stage
+from habitat_round import PHASE_1, Stage
 from habitat_scene import HabitatScene
 
 
@@ -135,6 +135,51 @@ def test_three_character_frames_loaded_for_every_habitat():
         assert len(scene._characters) == 3
 
 
+def _debug_key(key):
+    return pygame.event.Event(pygame.KEYDOWN, key=key)
+
+
+def test_debug_key_1_shows_frame_0_and_awards_one_statues_worth_of_patties():
+    reader = StubReader()
+    scene = _make_scene(reader, habitat=habitats.PATRICK)
+    scene.handle_event(pygame.event.Event(BUTTON_ENTER_EVENT))  # start phase 1
+    scene.handle_event(_debug_key(pygame.K_1))
+    assert scene._character_frame_index() == 0
+    assert scene._round.score == PHASE_1.statue_patties
+
+
+def test_debug_key_3_shows_frame_2_and_awards_three_statues_worth():
+    reader = StubReader()
+    scene = _make_scene(reader, habitat=habitats.PATRICK)
+    scene.handle_event(pygame.event.Event(BUTTON_ENTER_EVENT))
+    scene.handle_event(_debug_key(pygame.K_3))
+    assert scene._character_frame_index() == 2
+    assert scene._round.score == PHASE_1.statue_patties * 3
+
+
+def test_debug_key_moving_back_deducts_points_and_changes_frame():
+    reader = StubReader()
+    scene = _make_scene(reader, habitat=habitats.PATRICK)
+    scene.handle_event(pygame.event.Event(BUTTON_ENTER_EVENT))
+    scene.handle_event(_debug_key(pygame.K_3))
+    full_score = scene._round.score
+    scene.handle_event(_debug_key(pygame.K_1))
+    assert scene._character_frame_index() == 0
+    assert scene._round.score == PHASE_1.statue_patties
+    assert scene._round.score < full_score
+
+
+def test_debug_keys_do_not_touch_real_round_state():
+    reader = StubReader()
+    scene = _make_scene(reader, habitat=habitats.PATRICK)
+    scene.handle_event(pygame.event.Event(BUTTON_ENTER_EVENT))
+    scene.handle_event(_debug_key(pygame.K_3))
+    # Debug keys never place real pieces, so a real round can still be
+    # played/finished normally with the physical pieces afterward.
+    assert scene._round.pieces == ()
+    assert scene._round.stage == Stage.PHASE_1
+
+
 if __name__ == "__main__":
     test_scene_pushes_zero_on_entry()
     test_prev_and_next_events_do_not_advance_the_round()
@@ -146,4 +191,8 @@ if __name__ == "__main__":
     test_character_frame_index_matches_round_state()
     test_character_frame_index_is_celebrating_when_perfect()
     test_three_character_frames_loaded_for_every_habitat()
+    test_debug_key_1_shows_frame_0_and_awards_one_statues_worth_of_patties()
+    test_debug_key_3_shows_frame_2_and_awards_three_statues_worth()
+    test_debug_key_moving_back_deducts_points_and_changes_frame()
+    test_debug_keys_do_not_touch_real_round_state()
     print("OK")

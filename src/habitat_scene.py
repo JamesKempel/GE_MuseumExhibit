@@ -12,7 +12,7 @@ from habitat_overlays import (
     draw_intro,
     draw_results,
 )
-from habitat_round import HabitatRound, Piece, ScanOutcome, Stage, statue_patties
+from habitat_round import HabitatRound, Piece, ScanOutcome, ScoreEntry, Stage, rules_for, statue_patties
 from habitats import Habitat
 from images import load_fitted_image, load_scaled_image
 from krabby_patty import make_patty_surface
@@ -25,6 +25,16 @@ START_KEYS = (pygame.K_RETURN, pygame.K_KP_ENTER)
 
 # Where the physical LCD sits in the exhibit layout - flying patties animate here.
 LCD_TARGET_POSITION = (WINDOW_SIZE[0] // 2, 40)
+
+# ---------------------------------------------------------------------------
+# DEV-ONLY: lets 1/2/3 preview a character's 3 frames and award/deduct patties
+# as if a statue had really been scanned, for testing without the physical
+# RFID pieces. To go back to RFID-only input, set this to False (or delete
+# this block, DEBUG_SCORE_LABEL, and the 3 call sites tagged "debug testing"
+# below: in __init__, handle_event, and _draw_character).
+DEBUG_KEYBOARD_TESTING = True
+DEBUG_LEVEL_KEYS = {pygame.K_1: 1, pygame.K_2: 2, pygame.K_3: 3}
+DEBUG_SCORE_LABEL = "Debug test statue"
 
 
 class HabitatScene:
@@ -65,16 +75,43 @@ class HabitatScene:
         self._last_sent_score = 0
         self._rfid_reader.send_score(self._last_sent_score)
         self._flying_patties = FlyingPatties()
+        self._debug_level = 0  # debug testing
+        self._debug_frame_override: int | None = None  # debug testing
 
     # ---------- Input ----------
 
     def handle_event(self, event: pygame.event.Event) -> None:
         self._reset_button.handle_event(event)
+        if (  # debug testing
+            DEBUG_KEYBOARD_TESTING
+            and event.type == pygame.KEYDOWN
+            and event.key in DEBUG_LEVEL_KEYS
+        ):
+            self._debug_set_level(DEBUG_LEVEL_KEYS[event.key])
+            return
         pressed = event.type == BUTTON_ENTER_EVENT or (
             event.type == pygame.KEYDOWN and event.key in START_KEYS
         )
         if pressed:
             self._advance()
+
+    def _debug_set_level(self, level: int) -> None:
+        """1/2/3 => preview character frame (level - 1) and make the score
+        go up or down by one statue's worth of patties per level crossed,
+        as if that many statues had really been scanned right."""
+        delta = level - self._debug_level
+        if delta > 0:
+            patties = rules_for(self._round.phase).statue_patties
+            self._round.ledger = self._round.ledger + tuple(
+                ScoreEntry(self._round.phase, DEBUG_SCORE_LABEL, patties) for _ in range(delta)
+            )
+        elif delta < 0:
+            debug_indices = [i for i, e in enumerate(self._round.ledger) if e.label == DEBUG_SCORE_LABEL]
+            drop = set(debug_indices[len(debug_indices) + delta :])
+            self._round.ledger = tuple(e for i, e in enumerate(self._round.ledger) if i not in drop)
+        self._debug_level = level
+        self._debug_frame_override = level - 1
+        self._push_score_if_changed()
 
     def _advance(self) -> None:
         if self._round.stage in (Stage.INTRO_1, Stage.INTRO_2):
@@ -182,6 +219,8 @@ class HabitatScene:
 
     def _character_frame_index(self) -> int:
         """0 = struggling/fixing, 1 = neutral default, 2 = celebrating."""
+        if self._debug_frame_override is not None:  # debug testing
+            return self._debug_frame_override
         if self._round.is_perfect:
             return 2
         if self._round.phase == 2:
