@@ -106,14 +106,14 @@ def test_partial_fit_scan_spawns_flying_patties():
 def test_character_frame_index_matches_round_state():
     reader = StubReader()
     scene = _make_scene(reader, habitat=habitats.PATRICK)
-    assert scene._character_frame_index() == 1  # neutral, before phase 1 starts
+    assert scene._character_frame_index() == 0  # default/starting pose, habitat just loaded
 
     scene.handle_event(pygame.event.Event(BUTTON_ENTER_EVENT))  # start phase 1
-    assert scene._character_frame_index() == 1  # neutral during phase 1
+    assert scene._character_frame_index() == 0  # still the default pose during phase 1
 
     scene.update(999.0)  # timer runs out with nothing scanned -> phase 2
     assert scene._round.phase == 2
-    assert scene._character_frame_index() == 0  # struggling/fixing
+    assert scene._character_frame_index() == 1  # struggling/fixing
 
 
 def test_character_frame_index_is_celebrating_when_perfect():

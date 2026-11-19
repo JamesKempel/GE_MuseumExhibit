@@ -34,8 +34,9 @@ SPONGEBOB_MENU_BUTTON = {"path": str(MENU_BUTTON_DIR / "spongebob_house_cutout_2
 SQUIDWARD_MENU_BUTTON = {"path": str(MENU_BUTTON_DIR / "squidward_home_button_56h.png")}
 MR_KRABS_MENU_BUTTON = {"path": str(MENU_BUTTON_DIR / "krusty_krab_button_56h.png")}
 
-# Frame order for every character: 1 = struggling/fixing, 2 = neutral
-# default, 3 = celebrating a perfect habitat (see habitat_scene.py).
+# Frame order for every character: 1 = default/starting pose, shown from
+# the moment the habitat loads, 2 = struggling/fixing, 3 = celebrating a
+# perfect habitat (see habitat_scene.py).
 PATRICK_FRAME_1 = {"path": str(CHARACTER_DIR / "pattrick" / "patrick1_character_96h.png")}
 PATRICK_FRAME_2 = {"path": str(CHARACTER_DIR / "pattrick" / "patrick2_character_96h copy.png")}
 PATRICK_FRAME_3 = {"path": str(CHARACTER_DIR / "pattrick" / "patrick3_character_96h.png")}

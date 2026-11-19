@@ -218,11 +218,12 @@ class HabitatScene:
         surface.blit(character, character.get_rect(midbottom=self._habitat.character_position))
 
     def _character_frame_index(self) -> int:
-        """0 = struggling/fixing, 1 = neutral default, 2 = celebrating."""
+        """0 = default/starting pose (shown from the moment the habitat
+        loads), 1 = struggling/fixing, 2 = celebrating."""
         if self._debug_frame_override is not None:  # debug testing
             return self._debug_frame_override
         if self._round.is_perfect:
             return 2
         if self._round.phase == 2:
-            return 0
-        return 1
+            return 1
+        return 0
