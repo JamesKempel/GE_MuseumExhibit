@@ -26,7 +26,7 @@ class StatuePlacement:
 class Habitat:
     environment: str
     name: str
-    blurb: str  # what the character likes - shown before each phase
+    blurb: str  # short indirect clue about the character - shown before each phase
     background_path: str
     placements: tuple[StatuePlacement, ...]  # the perfect combination
     # One position per scanned statue that doesn't belong here.
@@ -58,8 +58,7 @@ def _placement(statue: str, need: str, *slots: tuple[int, int]) -> StatuePlaceme
 SPONGEBOB = Habitat(
     environment="spongebob_house",
     name="SpongeBob",
-    blurb="SpongeBob is a Sea Sponge! He likes to attach to hard objects and "
-    "blend in with colorful environments!",
+    blurb="A sea sponge never wanders far from something solid.",
     background_path=sprites.SPONGEBOB_HOUSE_BACKGROUND["path"],
     character_paths=(
         sprites.SPONGEBOB_FRAME_1["path"],
@@ -70,10 +69,10 @@ SPONGEBOB = Habitat(
     character_position=(676, 503),
     placements=(
         _placement("CORAL", "SpongeBob blends in with colorful places.",
-                   (70, 470), (560, 455), (905, 470)),
-        _placement("ROCK", "SpongeBob attaches to hard objects.", (190, 525), (790, 530)),
+                   (70, 470), (250, 495), (560, 455), (905, 470)),
+        _placement("ROCK", "SpongeBob attaches to hard objects.", (190, 525), (790, 530), (930, 535)),
         _placement("SHELL", "SpongeBob likes hard, colorful things to cling to.",
-                   (380, 525), (600, 500), (860, 425)),
+                   (60, 538), (380, 525), (600, 500), (860, 425)),
     ),
     open_slots=((130, 420), (480, 525), (300, 525)),
     partial_fit={"ROCKS_WITH_MUD": 0.5, "CLAM": 0.25},
@@ -82,8 +81,7 @@ SPONGEBOB = Habitat(
 SANDY = Habitat(
     environment="sandy_treedome",
     name="Sandy",
-    blurb="Sandy is a squirrel! She likes to climb high to get food and rest "
-    "in the warmth.",
+    blurb="Squirrels love a high perch and a warm spot.",
     background_path=sprites.SANDY_TREEDOME_BACKGROUND["path"],
     character_paths=(
         sprites.SANDY_FRAME_1["path"],
@@ -91,9 +89,9 @@ SANDY = Habitat(
         sprites.SANDY_FRAME_3["path"],
     ),
     placements=(
-        _placement("TREE", "Sandy likes to climb high.", (150, 430), (820, 420)),
+        _placement("TREE", "Sandy likes to climb high.", (150, 430), (480, 380), (820, 420)),
         _placement("ACORN", "Sandy gets her food from up high in the trees.",
-                   (300, 480), (560, 505), (700, 460)),
+                   (300, 480), (560, 505), (700, 460), (900, 515)),
         _placement("SUN", "Sandy likes to rest in the warmth.", (830, 110)),
     ),
     open_slots=((420, 440), (620, 420), (230, 525)),
@@ -102,8 +100,7 @@ SANDY = Habitat(
 SQUIDWARD = Habitat(
     environment="squidward_house",
     name="Squidward",
-    blurb="Squidward is an octopus! He likes to blend in with colorful "
-    "environments and breaks open his meals before hiding to eat them in the rocks.",
+    blurb="An octopus cracks open dinner, then hides to eat it.",
     background_path=sprites.SQUIDWARD_HOUSE_BACKGROUND["path"],
     character_paths=(
         sprites.SQUIDWARD_FRAME_1["path"],
@@ -115,7 +112,7 @@ SQUIDWARD = Habitat(
         _placement("CLAM", "Squidward breaks his meals open before eating.",
                    (180, 510), (760, 515)),
         _placement("CORAL", "Squidward blends in with colorful places.",
-                   (40, 500), (620, 490), (920, 500)),
+                   (40, 500), (360, 495), (620, 490), (920, 500)),
     ),
     open_slots=((300, 520), (540, 525), (850, 530)),
     partial_fit={"SHELL": 0.5, "ROCKS_WITH_MUD": 0.5, "SEA_URCHIN": 0.25, "FISH": 0.25},
@@ -124,7 +121,7 @@ SQUIDWARD = Habitat(
 MR_KRABS = Habitat(
     environment="mr_krabs",
     name="Mr. Krabs",
-    blurb="Mr. Krabs is a Crab! He loves to eat fish with his friends in the mud.",
+    blurb="Crabs dine with friends, down in the mud.",
     # Placeholder until Mr. Krabs gets a background of his own.
     background_path=sprites.OCTOPUS_REEF_BACKGROUND["path"],
     character_paths=(
@@ -134,7 +131,7 @@ MR_KRABS = Habitat(
     ),
     placements=(
         _placement("FISH", "Mr. Krabs loves to eat fish.",
-                   (180, 220), (300, 300), (700, 180), (800, 320)),
+                   (180, 220), (300, 300), (700, 180), (800, 320), (880, 250)),
         _placement("ROCKS_WITH_MUD", "Mr. Krabs eats down in the mud.", (230, 525), (720, 530)),
         _placement("CRAB", "Mr. Krabs eats with his friends.", (160, 520), (330, 530), (800, 525)),
     ),
@@ -145,8 +142,7 @@ MR_KRABS = Habitat(
 PATRICK = Habitat(
     environment="patrick_house",
     name="Patrick",
-    blurb="Patrick is a starfish! He likes to eat spikey food nested in a "
-    "forest of kelp and hangs out in the mud.",
+    blurb="This starfish has a prickly appetite and muddy tastes.",
     background_path=sprites.PATRICK_HOUSE_BACKGROUND["path"],
     character_paths=(
         sprites.PATRICK_FRAME_1["path"],
@@ -155,7 +151,7 @@ PATRICK = Habitat(
     ),
     placements=(
         _placement("SEA_URCHIN", "Patrick likes to eat spikey food.",
-                   (620, 420), (720, 400), (860, 440)),
+                   (620, 420), (720, 400), (790, 460), (860, 440)),
         # Open patches of sand clear of the rock, chair, lamp, and coral.
         _placement(
             "KELP", "Patrick nests his food in a forest of kelp.",
