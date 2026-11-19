@@ -1,0 +1,10 @@
+# Normalize text files to LF on checkout, regardless of OS, so a Windows
+# clone doesn't introduce CRLF diff noise or editor warnings.
+* text=auto eol=lf
+
+# Windows batch files need CRLF to run correctly via cmd.exe.
+*.bat text eol=crlf
+
+# Binary assets - never touch line endings in these.
+*.png binary
+*.db binary
