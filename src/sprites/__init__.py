@@ -48,11 +48,6 @@ SANDY_FRAME_3 = {"path": str(CHARACTER_DIR / "sandy" / "sandy3_character_96h.png
 SQUIDWARD_FRAME_1 = {"path": str(CHARACTER_DIR / "squidward" / "squidward1_character_96h copy.png")}
 SQUIDWARD_FRAME_2 = {"path": str(CHARACTER_DIR / "squidward" / "squidward2_character_96h.png")}
 SQUIDWARD_FRAME_3 = {"path": str(CHARACTER_DIR / "squidward" / "squidward3_character_96h.png")}
-# Krabs' source files don't follow the same 1=struggling/2=neutral/3=celebrating
-# order as the other characters: the art for frame slot 3 (celebrating) is
-# "krabs2", and the art for frame slot 1 (struggling) is "krabs3" - matched by
-# what each pose actually shows (grin+claws-up vs. anxious over a money bag),
-# not by filename number.
-MR_KRABS_FRAME_1 = {"path": str(CHARACTER_DIR / "krabs" / "krabs3_character_96h.png")}
-MR_KRABS_FRAME_2 = {"path": str(CHARACTER_DIR / "krabs" / "krabs_character_96h.png")}
-MR_KRABS_FRAME_3 = {"path": str(CHARACTER_DIR / "krabs" / "krabs2_character_fullres.png")}
+MR_KRABS_FRAME_1 = {"path": str(CHARACTER_DIR / "krabs" / "krabs1_character_96h.png")}
+MR_KRABS_FRAME_2 = {"path": str(CHARACTER_DIR / "krabs" / "krabs2_character_96h.png")}
+MR_KRABS_FRAME_3 = {"path": str(CHARACTER_DIR / "krabs" / "krabs3_character_96h.png")}
