@@ -29,6 +29,8 @@ def main() -> None:
             go_to_patrick_house=go_to_patrick_house,
             go_to_sandy_treedome=go_to_sandy_treedome,
             go_to_spongebob_house=go_to_spongebob_house,
+            go_to_squidward_house=go_to_squidward_house,
+            go_to_krusty_krab=go_to_krusty_krab,
         )
 
     def go_to_habitat(habitat: Habitat) -> None:
@@ -47,6 +49,12 @@ def main() -> None:
 
     def go_to_spongebob_house() -> None:
         go_to_habitat(habitats.SPONGEBOB)
+
+    def go_to_squidward_house() -> None:
+        go_to_habitat(habitats.SQUIDWARD)
+
+    def go_to_krusty_krab() -> None:
+        go_to_habitat(habitats.MR_KRABS)
 
     go_to_menu()
 

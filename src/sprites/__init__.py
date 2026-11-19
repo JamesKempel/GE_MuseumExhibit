@@ -31,8 +31,17 @@ OCTOPUS_REEF_BACKGROUND = {"path": str(BACKGROUND_DIR / "octopus_reef_scene_480x
 PATRICK_MENU_BUTTON = {"path": str(MENU_BUTTON_DIR / "patrick_landmark_56h.png")}
 SANDY_MENU_BUTTON = {"path": str(MENU_BUTTON_DIR / "sandy_landmark_56h.png")}
 SPONGEBOB_MENU_BUTTON = {"path": str(MENU_BUTTON_DIR / "spongebob_house_cutout_200h.png")}
+SQUIDWARD_MENU_BUTTON = {"path": str(MENU_BUTTON_DIR / "squidward_home_button_56h.png")}
+MR_KRABS_MENU_BUTTON = {"path": str(MENU_BUTTON_DIR / "krusty_krab_button_56h.png")}
 
+# Frame order for every character: 1 = struggling/fixing, 2 = neutral
+# default, 3 = celebrating a perfect habitat (see habitat_scene.py).
 PATRICK_FRAME_1 = {"path": str(CHARACTER_DIR / "pattrick" / "patrick1_character_96h.png")}
-PATRICK_FRAME_2 = {"path": str(CHARACTER_DIR / "pattrick" / "patrick2_character_96h.png")}
-SPONGEBOB_FRAME_1 = {"path": str(CHARACTER_DIR / "spongebob" / "spongebob_character_96h.png")}
-SPONGEBOB_FRAME_2 = {"path": str(CHARACTER_DIR / "spongebob" / "spongebob2_character_96h.png")}
+PATRICK_FRAME_2 = {"path": str(CHARACTER_DIR / "pattrick" / "patrick2_character_96h copy.png")}
+PATRICK_FRAME_3 = {"path": str(CHARACTER_DIR / "pattrick" / "patrick3_character_96h.png")}
+SPONGEBOB_FRAME_1 = {"path": str(CHARACTER_DIR / "spongebob" / "spongebob_1_character_96h.png")}
+SPONGEBOB_FRAME_2 = {"path": str(CHARACTER_DIR / "spongebob" / "spongebob_2_character_96h.png")}
+SPONGEBOB_FRAME_3 = {"path": str(CHARACTER_DIR / "spongebob" / "spongebob_3_character_96h.png")}
+SANDY_FRAME_1 = {"path": str(CHARACTER_DIR / "sandy" / "sandy_1_character_96h.png")}
+SANDY_FRAME_2 = {"path": str(CHARACTER_DIR / "sandy" / "sandy2_character_fullres.png")}
+SANDY_FRAME_3 = {"path": str(CHARACTER_DIR / "sandy" / "sandy3_character_96h.png")}

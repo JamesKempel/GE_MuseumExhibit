@@ -34,8 +34,8 @@ class Habitat:
     # Partial credit (0-1) for statues that aren't perfect but sort of fit.
     # Correct statues always score 1.0; anything unlisted scores 0.
     partial_fit: dict[str, float] = field(default_factory=dict)
-    # Default frame, and the frame shown once the habitat is perfect.
-    character_paths: tuple[str, str] | None = None
+    # 3 frames: struggling/fixing, neutral default, celebrating a perfect habitat.
+    character_paths: tuple[str, str, str] | None = None
     character_position: tuple[int, int] = DEFAULT_CHARACTER_POSITION
 
     @property
@@ -61,7 +61,11 @@ SPONGEBOB = Habitat(
     blurb="SpongeBob is a Sea Sponge! He likes to attach to hard objects and "
     "blend in with colorful environments!",
     background_path=sprites.SPONGEBOB_HOUSE_BACKGROUND["path"],
-    character_paths=(sprites.SPONGEBOB_FRAME_1["path"], sprites.SPONGEBOB_FRAME_2["path"]),
+    character_paths=(
+        sprites.SPONGEBOB_FRAME_1["path"],
+        sprites.SPONGEBOB_FRAME_2["path"],
+        sprites.SPONGEBOB_FRAME_3["path"],
+    ),
     # The background has a character anchor box drawn to the right of the pineapple.
     character_position=(676, 503),
     placements=(
@@ -81,6 +85,11 @@ SANDY = Habitat(
     blurb="Sandy is a squirrel! She likes to climb high to get food and rest "
     "in the warmth.",
     background_path=sprites.SANDY_TREEDOME_BACKGROUND["path"],
+    character_paths=(
+        sprites.SANDY_FRAME_1["path"],
+        sprites.SANDY_FRAME_2["path"],
+        sprites.SANDY_FRAME_3["path"],
+    ),
     placements=(
         _placement("TREE", "Sandy likes to climb high.", (150, 430), (820, 420)),
         _placement("ACORN", "Sandy gets her food from up high in the trees.",
@@ -129,7 +138,11 @@ PATRICK = Habitat(
     blurb="Patrick is a starfish! He likes to eat spikey food nested in a "
     "forest of kelp and hangs out in the mud.",
     background_path=sprites.PATRICK_HOUSE_BACKGROUND["path"],
-    character_paths=(sprites.PATRICK_FRAME_1["path"], sprites.PATRICK_FRAME_2["path"]),
+    character_paths=(
+        sprites.PATRICK_FRAME_1["path"],
+        sprites.PATRICK_FRAME_2["path"],
+        sprites.PATRICK_FRAME_3["path"],
+    ),
     placements=(
         _placement("SEA_URCHIN", "Patrick likes to eat spikey food.",
                    (620, 420), (720, 400), (860, 440)),

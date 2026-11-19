@@ -177,5 +177,13 @@ class HabitatScene:
     def _draw_character(self, surface: pygame.Surface) -> None:
         if self._characters is None:
             return
-        character = self._characters[1 if self._round.is_perfect else 0]
+        character = self._characters[self._character_frame_index()]
         surface.blit(character, character.get_rect(midbottom=self._habitat.character_position))
+
+    def _character_frame_index(self) -> int:
+        """0 = struggling/fixing, 1 = neutral default, 2 = celebrating."""
+        if self._round.is_perfect:
+            return 2
+        if self._round.phase == 2:
+            return 0
+        return 1

@@ -16,12 +16,19 @@ SANDY_MARKER_POSITION = (220, 152)  # green marker - Sandy's treedome
 SPONGEBOB_MARKER_POSITION = (819, 353)  # yellow marker - SpongeBob's pineapple,
 # nudged up from the marker's true center (819, 380) so the tall pineapple
 # icon still fits inside the window instead of running off the bottom edge.
+# The overlay has 5 markers total; these last 2 weren't labeled anywhere, so
+# the color -> house assignment below is a best guess - swap them if wrong.
+SQUIDWARD_MARKER_POSITION = (680, 117)  # blue marker - Squidward's house (guess)
+MR_KRABS_MARKER_POSITION = (505, 337)  # red marker - the Krusty Krab (guess)
 
 # Each landmark icon has its own transparent margins, so each needs its own
-# scale to fully cover its marker's circle instead of the default 2x.
+# scale to fully cover its marker's circle instead of the default 2x. The
+# last 2 are untuned starting guesses - check them against a real display.
 PATRICK_BUTTON_SCALE = 3.6
 SANDY_BUTTON_SCALE = 2.3
 SPONGEBOB_BUTTON_SCALE = 1.85
+SQUIDWARD_BUTTON_SCALE = 2.2
+MR_KRABS_BUTTON_SCALE = 1.7
 
 
 class Scene(Protocol):
@@ -36,6 +43,8 @@ class MainMenuScene:
         go_to_patrick_house: Callable[[], None],
         go_to_sandy_treedome: Callable[[], None],
         go_to_spongebob_house: Callable[[], None],
+        go_to_squidward_house: Callable[[], None],
+        go_to_krusty_krab: Callable[[], None],
     ) -> None:
         self._title_font = pygame.font.SysFont(None, 54)
         self._background = load_fitted_image(sprites.MENU_BACKGROUND["path"], WINDOW_SIZE)
@@ -57,6 +66,18 @@ class MainMenuScene:
                 image=load_scaled_image(sprites.SPONGEBOB_MENU_BUTTON["path"], scale=SPONGEBOB_BUTTON_SCALE),
                 center=SPONGEBOB_MARKER_POSITION,
                 action=go_to_spongebob_house,
+            ),
+            Button(
+                label="Squidward's House",
+                image=load_scaled_image(sprites.SQUIDWARD_MENU_BUTTON["path"], scale=SQUIDWARD_BUTTON_SCALE),
+                center=SQUIDWARD_MARKER_POSITION,
+                action=go_to_squidward_house,
+            ),
+            Button(
+                label="Krusty Krab",
+                image=load_scaled_image(sprites.MR_KRABS_MENU_BUTTON["path"], scale=MR_KRABS_BUTTON_SCALE),
+                center=MR_KRABS_MARKER_POSITION,
+                action=go_to_krusty_krab,
             ),
         ]
         self._focused_index = 0

@@ -103,6 +103,45 @@ def test_partial_fit_scan_spawns_flying_patties():
     assert len(scene._flying_patties._patties) > 0
 
 
+def test_character_frame_index_matches_round_state():
+    reader = StubReader()
+    scene = _make_scene(reader, habitat=habitats.PATRICK)
+    assert scene._character_frame_index() == 1  # neutral, before phase 1 starts
+
+    scene.handle_event(pygame.event.Event(BUTTON_ENTER_EVENT))  # start phase 1
+    assert scene._character_frame_index() == 1  # neutral during phase 1
+
+    scene.update(999.0)  # timer runs out with nothing scanned -> phase 2
+    assert scene._round.phase == 2
+    assert scene._character_frame_index() == 0  # struggling/fixing
+
+
+def test_character_frame_index_is_celebrating_when_perfect():
+    reader = StubReader()
+    scene = _make_scene(reader, habitat=habitats.PATRICK)
+    scene.handle_event(pygame.event.Event(BUTTON_ENTER_EVENT))
+    for statue in ("SEA_URCHIN", "KELP", "ROCKS_WITH_MUD"):
+        reader.queue_scan(statue)
+    scene.update(0.0)
+    assert scene._round.is_perfect
+    assert scene._character_frame_index() == 2
+
+
+def test_three_character_frames_loaded_for_spongebob_sandy_patrick():
+    for habitat in (habitats.SPONGEBOB, habitats.SANDY, habitats.PATRICK):
+        reader = StubReader()
+        scene = _make_scene(reader, habitat=habitat)
+        assert scene._characters is not None
+        assert len(scene._characters) == 3
+
+
+def test_squidward_and_krabs_have_no_character_art_yet():
+    for habitat in (habitats.SQUIDWARD, habitats.MR_KRABS):
+        reader = StubReader()
+        scene = _make_scene(reader, habitat=habitat)
+        assert scene._characters is None
+
+
 if __name__ == "__main__":
     test_scene_pushes_zero_on_entry()
     test_prev_and_next_events_do_not_advance_the_round()
@@ -111,4 +150,8 @@ if __name__ == "__main__":
     test_scan_that_fits_spawns_flying_patties()
     test_scan_that_does_not_fit_spawns_no_flying_patties()
     test_partial_fit_scan_spawns_flying_patties()
+    test_character_frame_index_matches_round_state()
+    test_character_frame_index_is_celebrating_when_perfect()
+    test_three_character_frames_loaded_for_spongebob_sandy_patrick()
+    test_squidward_and_krabs_have_no_character_art_yet()
     print("OK")
