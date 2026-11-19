@@ -30,6 +30,20 @@ def _make_scene(db_path, go_to_menu=lambda: None, score=26):
     )
 
 
+def test_draw_renders_something_not_blank():
+    db_path = _temp_db_path()
+    try:
+        scene = _make_scene(db_path)
+        surface = pygame.Surface((400, 300))
+        sentinel = (1, 2, 3)
+        surface.fill(sentinel)
+        blank_bytes = pygame.image.tostring(surface, "RGB")
+        scene.draw(surface)
+        assert pygame.image.tostring(surface, "RGB") != blank_bytes
+    finally:
+        db_path.unlink(missing_ok=True)
+
+
 def test_entry_is_recorded_and_appears_in_top_entries():
     db_path = _temp_db_path()
     try:
@@ -65,6 +79,7 @@ def test_auto_returns_to_menu_after_timeout_not_before():
 
 
 if __name__ == "__main__":
+    test_draw_renders_something_not_blank()
     test_entry_is_recorded_and_appears_in_top_entries()
     test_enter_returns_to_menu_immediately()
     test_auto_returns_to_menu_after_timeout_not_before()

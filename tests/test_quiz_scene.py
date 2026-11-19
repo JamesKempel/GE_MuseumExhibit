@@ -1,3 +1,5 @@
+import random
+
 import pygame
 
 pygame.init()
@@ -17,12 +19,38 @@ _QUESTION = QuizQuestion(text="2+2?", options=("3", "4", "5"), correct_index=1)
 
 
 def _make_scene(calls, base_score=20):
+    # shuffle=False keeps these tests' index-based assertions deterministic -
+    # shuffling itself is covered by its own dedicated test below.
     return QuizScene(
         habitat_name="Patrick",
         base_score=base_score,
         go_to_leaderboard=lambda score: calls.append(score),
         question=_QUESTION,
+        shuffle=False,
     )
+
+
+def test_shuffle_reorders_options_but_keeps_the_correct_answer_findable():
+    scene = QuizScene(
+        habitat_name="Patrick",
+        base_score=0,
+        go_to_leaderboard=lambda score: None,
+        question=_QUESTION,
+        shuffle=True,
+        rng=random.Random(1),
+    )
+    assert scene._question.options[scene._question.correct_index] == "4"
+    assert set(scene._question.options) == set(_QUESTION.options)
+
+
+def test_draw_renders_something_not_blank():
+    scene = _make_scene([])
+    surface = pygame.Surface((400, 300))
+    sentinel = (1, 2, 3)
+    surface.fill(sentinel)
+    blank_bytes = pygame.image.tostring(surface, "RGB")
+    scene.draw(surface)
+    assert pygame.image.tostring(surface, "RGB") != blank_bytes
 
 
 def test_wrong_answer_gives_zero_bonus():
@@ -87,6 +115,8 @@ def test_does_not_transition_before_feedback_delay_elapses():
 
 
 if __name__ == "__main__":
+    test_draw_renders_something_not_blank()
+    test_shuffle_reorders_options_but_keeps_the_correct_answer_findable()
     test_wrong_answer_gives_zero_bonus()
     test_slow_correct_answer_gives_exactly_the_base_bonus()
     test_instant_correct_answer_gives_the_maximum_bonus()

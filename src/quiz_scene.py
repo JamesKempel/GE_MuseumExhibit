@@ -1,3 +1,4 @@
+import random
 import time
 from typing import Callable
 
@@ -12,6 +13,11 @@ QUIZ_SPEED_BONUS_PER_SECOND = 0.05
 FEEDBACK_SECONDS = 1.5
 START_KEYS = (pygame.K_RETURN, pygame.K_KP_ENTER)
 
+FOCUS_COLOR = (255, 215, 0)
+CORRECT_COLOR = (120, 230, 120)
+WRONG_COLOR = (255, 80, 80)
+TEXT_COLOR = (255, 255, 255)
+
 
 def compute_bonus(correct: bool, seconds_taken: float) -> int:
     if not correct:
@@ -19,6 +25,17 @@ def compute_bonus(correct: bool, seconds_taken: float) -> int:
     seconds_remaining = max(0.0, QUIZ_TIME_LIMIT_SECONDS - seconds_taken)
     multiplier = 1 + QUIZ_SPEED_BONUS_PER_SECOND * seconds_remaining
     return round(QUIZ_BASE_BONUS * multiplier)
+
+
+def _shuffled(question: QuizQuestion, rng: random.Random) -> QuizQuestion:
+    """Returns a new QuizQuestion with the options in a random order, so
+    the correct answer isn't always at a predictable position - a kid
+    mashing Enter shouldn't reliably land on it."""
+    indices = list(range(len(question.options)))
+    rng.shuffle(indices)
+    new_options = tuple(question.options[i] for i in indices)
+    new_correct_index = indices.index(question.correct_index)
+    return QuizQuestion(text=question.text, options=new_options, correct_index=new_correct_index)
 
 
 class QuizScene:
@@ -33,8 +50,11 @@ class QuizScene:
         base_score: int,
         go_to_leaderboard: Callable[[int], None],
         question: QuizQuestion | None = None,
+        shuffle: bool = True,
+        rng: random.Random | None = None,
     ) -> None:
-        self._question = question if question is not None else random_question(habitat_name)
+        base_question = question if question is not None else random_question(habitat_name)
+        self._question = _shuffled(base_question, rng or random.Random()) if shuffle else base_question
         self._base_score = base_score
         self._go_to_leaderboard = go_to_leaderboard
         self._focused_index = 0
@@ -79,4 +99,26 @@ class QuizScene:
             self._go_to_leaderboard(self._final_score)
 
     def draw(self, surface: pygame.Surface) -> None:
-        pass
+        surface.fill((15, 30, 55))
+        title = self._font.render(self._question.text, True, TEXT_COLOR)
+        surface.blit(title, title.get_rect(midtop=(surface.get_width() // 2, 40)))
+
+        option_font = pygame.font.SysFont(None, 28)
+        y = 140
+        for i, option in enumerate(self._question.options):
+            color = TEXT_COLOR
+            if self._answered:
+                if i == self._question.correct_index:
+                    color = CORRECT_COLOR
+                elif i == self._focused_index:
+                    color = WRONG_COLOR
+            elif i == self._focused_index:
+                color = FOCUS_COLOR
+            text = option_font.render(option, True, color)
+            surface.blit(text, text.get_rect(midtop=(surface.get_width() // 2, y)))
+            y += 40
+
+        if self._answered:
+            feedback = "Correct!" if self._correct else "Not quite..."
+            feedback_surface = self._font.render(feedback, True, FOCUS_COLOR)
+            surface.blit(feedback_surface, feedback_surface.get_rect(midtop=(surface.get_width() // 2, y + 20)))
