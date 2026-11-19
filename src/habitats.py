@@ -105,6 +105,11 @@ SQUIDWARD = Habitat(
     blurb="Squidward is an octopus! He likes to blend in with colorful "
     "environments and breaks open his meals before hiding to eat them in the rocks.",
     background_path=sprites.SQUIDWARD_HOUSE_BACKGROUND["path"],
+    character_paths=(
+        sprites.SQUIDWARD_FRAME_1["path"],
+        sprites.SQUIDWARD_FRAME_2["path"],
+        sprites.SQUIDWARD_FRAME_3["path"],
+    ),
     placements=(
         _placement("ROCK", "Squidward hides in the rocks to eat.", (120, 520), (700, 525)),
         _placement("CLAM", "Squidward breaks his meals open before eating.",
@@ -122,6 +127,11 @@ MR_KRABS = Habitat(
     blurb="Mr. Krabs is a Crab! He loves to eat fish with his friends in the mud.",
     # Placeholder until Mr. Krabs gets a background of his own.
     background_path=sprites.OCTOPUS_REEF_BACKGROUND["path"],
+    character_paths=(
+        sprites.MR_KRABS_FRAME_1["path"],
+        sprites.MR_KRABS_FRAME_2["path"],
+        sprites.MR_KRABS_FRAME_3["path"],
+    ),
     placements=(
         _placement("FISH", "Mr. Krabs loves to eat fish.",
                    (180, 220), (300, 300), (700, 180), (800, 320)),

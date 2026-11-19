@@ -127,19 +127,12 @@ def test_character_frame_index_is_celebrating_when_perfect():
     assert scene._character_frame_index() == 2
 
 
-def test_three_character_frames_loaded_for_spongebob_sandy_patrick():
-    for habitat in (habitats.SPONGEBOB, habitats.SANDY, habitats.PATRICK):
+def test_three_character_frames_loaded_for_every_habitat():
+    for habitat in habitats.ALL_HABITATS:
         reader = StubReader()
         scene = _make_scene(reader, habitat=habitat)
         assert scene._characters is not None
         assert len(scene._characters) == 3
-
-
-def test_squidward_and_krabs_have_no_character_art_yet():
-    for habitat in (habitats.SQUIDWARD, habitats.MR_KRABS):
-        reader = StubReader()
-        scene = _make_scene(reader, habitat=habitat)
-        assert scene._characters is None
 
 
 if __name__ == "__main__":
@@ -152,6 +145,5 @@ if __name__ == "__main__":
     test_partial_fit_scan_spawns_flying_patties()
     test_character_frame_index_matches_round_state()
     test_character_frame_index_is_celebrating_when_perfect()
-    test_three_character_frames_loaded_for_spongebob_sandy_patrick()
-    test_squidward_and_krabs_have_no_character_art_yet()
+    test_three_character_frames_loaded_for_every_habitat()
     print("OK")
