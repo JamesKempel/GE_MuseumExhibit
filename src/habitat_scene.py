@@ -49,10 +49,12 @@ class HabitatScene:
         self,
         habitat: Habitat,
         go_to_menu: Callable[[], None],
+        go_to_quiz: Callable[[int], None],
         rfid_reader: RFIDReader,
     ) -> None:
         self._habitat = habitat
         self._go_to_menu = go_to_menu
+        self._go_to_quiz = go_to_quiz
         self._rfid_reader = rfid_reader
         self._rfid_reader.drain()  # ignore scans from before this scene was entered
         self._round = HabitatRound(habitat)
@@ -117,7 +119,7 @@ class HabitatScene:
         if self._round.stage in (Stage.INTRO_1, Stage.INTRO_2):
             self._round.start_phase()
         elif self._round.stage == Stage.RESULTS:
-            self._go_to_menu()
+            self._go_to_quiz(self._round.score)
 
     # ---------- Update ----------
 

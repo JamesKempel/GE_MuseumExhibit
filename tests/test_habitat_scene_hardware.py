@@ -28,8 +28,8 @@ class StubReader:
         self._queued_events.append(statue)
 
 
-def _make_scene(reader, habitat=habitats.PATRICK):
-    return HabitatScene(habitat=habitat, go_to_menu=lambda: None, rfid_reader=reader)
+def _make_scene(reader, habitat=habitats.PATRICK, go_to_quiz=lambda score: None):
+    return HabitatScene(habitat=habitat, go_to_menu=lambda: None, go_to_quiz=go_to_quiz, rfid_reader=reader)
 
 
 def test_scene_pushes_zero_on_entry():
@@ -180,6 +180,34 @@ def test_debug_keys_do_not_touch_real_round_state():
     assert scene._round.stage == Stage.PHASE_1
 
 
+def test_results_stage_enter_calls_go_to_quiz_with_final_score():
+    quiz_calls = []
+    reader = StubReader()
+    scene = _make_scene(reader, go_to_quiz=lambda score: quiz_calls.append(score))
+    scene.handle_event(pygame.event.Event(BUTTON_ENTER_EVENT))  # start phase 1
+    for statue in ("SEA_URCHIN", "KELP", "ROCKS_WITH_MUD"):
+        reader.queue_scan(statue)
+    scene.update(0.0)  # perfect combination -> Stage.RESULTS
+    assert scene._round.stage == Stage.RESULTS
+    scene.handle_event(pygame.event.Event(BUTTON_ENTER_EVENT))  # advance from results
+    assert quiz_calls == [scene._round.score]
+
+
+def test_reset_button_goes_straight_to_menu_not_through_the_quiz():
+    menu_calls = []
+    quiz_calls = []
+    reader = StubReader()
+    scene = HabitatScene(
+        habitat=habitats.PATRICK,
+        go_to_menu=lambda: menu_calls.append(True),
+        go_to_quiz=lambda score: quiz_calls.append(score),
+        rfid_reader=reader,
+    )
+    scene.handle_event(pygame.event.Event(pygame.KEYDOWN, key=pygame.K_ESCAPE))
+    assert menu_calls == [True]
+    assert quiz_calls == []
+
+
 if __name__ == "__main__":
     test_scene_pushes_zero_on_entry()
     test_prev_and_next_events_do_not_advance_the_round()
@@ -195,4 +223,6 @@ if __name__ == "__main__":
     test_debug_key_3_shows_frame_2_and_awards_three_statues_worth()
     test_debug_key_moving_back_deducts_points_and_changes_frame()
     test_debug_keys_do_not_touch_real_round_state()
+    test_results_stage_enter_calls_go_to_quiz_with_final_score()
+    test_reset_button_goes_straight_to_menu_not_through_the_quiz()
     print("OK")
